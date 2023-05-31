@@ -2849,6 +2849,19 @@ where(const typename simd<_Tp, _Abi>::mask_type& __m, const simd<_Tp, _Abi>& __s
   return {__m, __s};
 }
 
+// file: type_identity.h  manual extend to fix weird error
+
+template <class _Tp>
+struct __type_identity { typedef _Tp type; };
+
+template <class _Tp>
+using __type_identity_t _LIBCPP_NODEBUG = typename __type_identity<_Tp>::type;
+
+#if _LIBCPP_STD_VER >= 20
+template<class _Tp> struct type_identity { typedef _Tp type; };
+template<class _Tp> using type_identity_t = typename type_identity<_Tp>::type;
+#endif
+
 template <class _Tp, class _Abi>
 where_expression<simd_mask<_Tp, _Abi>, simd_mask<_Tp, _Abi>>
 where(const __type_identity_t<simd_mask<_Tp, _Abi>>& __m, simd_mask<_Tp, _Abi>& __s) noexcept {

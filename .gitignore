@@ -1,0 +1,36 @@
+# CMake build files
+build/
+CMakeFiles/
+CMakeCache.txt
+*.cmake
+Makefile
+
+# Compiled Object files
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lib
+*.a
+
+# Executables
+*.exe
+*.out
+
+# Visual Studio Code
+.vscode/
+
+# CLion
+.idea/
+
+# macOS
+.DS_Store

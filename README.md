@@ -22,8 +22,17 @@ A convenient way to test the library is by using the [Compiler Explorer](https:/
 
 We highly value your feedback and contributions. If you encounter any unexpected behavior or difficulties when integrating this file into your repository, please open an issue. We'll work to resolve it promptly.
 
-For a brief overview of usage, refer to the following example:
+For a concise usage example, consider the following:
 
+In the `src/` directory, there is a file named [main.cc](./src/main.cc). This file demonstrates a simple matrix multiplication operation. To observe the result, run the following commands:
+```
+mkdir build
+cd build
+cmake ..
+./simd_demo
+```
+
+To incorporate this into your project, please refer to the example code below:
 ```cpp
 #include "simd.h"
 
