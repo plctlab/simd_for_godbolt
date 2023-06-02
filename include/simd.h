@@ -2815,19 +2815,19 @@ int find_last_set(const simd_mask<_Tp, _Abi>& __m) {
   return __mask_traits<_Tp, _Abi>::__find_last_set(__m.__s_);
 }
 
-bool all_of(_Bool __v) noexcept { return __v; }
+inline bool all_of(_Bool __v) noexcept { return __v; }
 
-bool any_of(_Bool __v) noexcept { return __v; }
+inline bool any_of(_Bool __v) noexcept { return __v; }
 
-bool none_of(_Bool __v) noexcept { return !__v; }
+inline bool none_of(_Bool __v) noexcept { return !__v; }
 
-bool some_of(_Bool) noexcept { return false; }
+inline bool some_of(_Bool) noexcept { return false; }
 
-int popcount(_Bool __v) noexcept { return __v; }
+inline int popcount(_Bool __v) noexcept { return __v; }
 
-int find_first_set(_Bool) noexcept { return 0; }
+inline int find_first_set(_Bool) noexcept { return 0; }
 
-int find_last_set(_Bool) noexcept { return 0; }
+inline int find_last_set(_Bool) noexcept { return 0; }
 
 // Where expression class templates [parallel.simd.whereexpr]
 template <class _MaskType, class _SimdType>
