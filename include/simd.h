@@ -9,6 +9,7 @@
 #define __cpp_lib_experimental_parallel_simd 201803
 
 #include <limits> // solve weird error
+#include <cmath>
 
 // file: libcxx/include/experimental/__config
 #ifndef _LIBCPP_EXPERIMENTAL_CONFIG
@@ -1860,6 +1861,8 @@ struct __simd_traits<_Tp, simd_abi::__scalar> {
   static _Tp __reduce(const _Simd& __s, _BinaryOp) {
     return __s.__data;
   }
+
+  static _Tp __sqrt(_Simd __s) { return sqrt(__s.__data); }
 };
 
 template <class _Tp>
@@ -2049,6 +2052,8 @@ struct __simd_traits<_Tp, simd_abi::__vec_ext<_Np>> {
   static _Tp __reduce(const _Simd& __s, bit_or<>) { return __builtin_reduce_or(__s.__data); }
 
   static _Tp __reduce(const _Simd& __s, bit_xor<>) { return __builtin_reduce_xor(__s.__data); }
+
+  static _Simd __sqrt(const _Simd __s) noexcept { return {__builtin_elementwise_sqrt(__s.__data)}; }
 };
 
 template <class _Tp, int _Np>
@@ -2988,6 +2993,11 @@ simd<_Tp, _Abi> clamp(const simd<_Tp, _Abi>& __v, const simd<_Tp, _Abi>& __lo, c
   return __simd_traits<_Tp, _Abi>::__clamp(__v.__s_, __lo.__s_, __hi.__s_);
 }
 
+template <class _Tp, class _Abi>
+simd<_Tp, _Abi> sqrt(const simd<_Tp, _Abi>& __s) noexcept {
+  return __simd_traits<_Tp, _Abi>::__sqrt(__s.__s_);
+}
+
 // Where expression class templates [parallel.simd.whereexpr]
 template <class _MaskType, class _SimdType>
 class const_where_expression {
@@ -3293,6 +3303,7 @@ class simd : public __simd_int_operators<simd<_Tp, _Abi>, __simd_traits<_Tp, _Ab
   friend simd clamp<>(const simd&, const simd&, const simd&) noexcept;
   friend _Tp hmin<>(const simd&) noexcept;
   friend _Tp hmax<>(const simd&) noexcept;
+  friend simd sqrt<>(const simd&) noexcept;
 
   template <class __Tp, class __Abi, class _BinaryOp>
   friend __Tp reduce(const simd<__Tp, __Abi>&, _BinaryOp);
@@ -8925,47 +8936,48 @@ ldoublev<Abi> ceil(ldoublev<Abi> x){
   return ldx;
 }
 
-template <class Abi>
-floatv<Abi> sqrt(floatv<Abi> x) {
-  doublev<Abi> xd = static_simd_cast<doublev<Abi>>(x);
-  Abi_64suf<Abi> ux;
-  ux.f = xd;
-  ulongv<Abi> sign = (ux.u >> 52) & SqrtAbsMask;
-  sign -= SqrtSignMask;
-  ux.i = ux.i & s2v<long, longv<Abi>>(ExpMask);
-  ux.i = ux.i | s2v<long, longv<Abi>>(HalfOne_N);
-  auto c1=0.4173075996388649989089, c2=0.59016206709064458299663;
-  ux.f = c1 + c2 * ux.f;
-  where(static_simd_cast<doublev<Abi>>(sign & 1) != 0, ux.f) = ux.f * SQRT2;
-  ux.f = ldexp<Abi>(ux.f, static_simd_cast<samesize<int, doublev<Abi>>>(sign >> 1) );
-  ux.f = 0.5*(ux.f + xd/ux.f);
-  ux.f = 0.5*(ux.f + xd/ux.f);
-  ux.f = 0.5*(ux.f + xd/ux.f);
-  where(x<0, ux.f) = LLVM_NAN_64F;
-  return static_simd_cast<floatv<Abi>>(ux.f);
-}
 
-template <class Abi>
-doublev<Abi> sqrt(doublev<Abi> x) {
-  Abi_64suf<Abi> ux;
-  ux.f = x;
-  ulongv<Abi> sign = (ux.u >> 52) & SqrtAbsMask;
-  sign -= SqrtSignMask;
-  ux.i = ux.i & s2v<long, longv<Abi>>(ExpMask);
-  ux.i = ux.i | s2v<long, longv<Abi>>(HalfOne_N);
+// template <class Abi>
+// floatv<Abi> sqrt(floatv<Abi> x) {
+//   doublev<Abi> xd = static_simd_cast<doublev<Abi>>(x);
+//   Abi_64suf<Abi> ux;
+//   ux.f = xd;
+//   ulongv<Abi> sign = (ux.u >> 52) & SqrtAbsMask;
+//   sign -= SqrtSignMask;
+//   ux.i = ux.i & s2v<long, longv<Abi>>(ExpMask);
+//   ux.i = ux.i | s2v<long, longv<Abi>>(HalfOne_N);
+//   auto c1=0.4173075996388649989089, c2=0.59016206709064458299663;
+//   ux.f = c1 + c2 * ux.f;
+//   where(static_simd_cast<doublev<Abi>>(sign & 1) != 0, ux.f) = ux.f * SQRT2;
+//   ux.f = ldexp<Abi>(ux.f, static_simd_cast<samesize<int, doublev<Abi>>>(sign >> 1) );
+//   ux.f = 0.5*(ux.f + xd/ux.f);
+//   ux.f = 0.5*(ux.f + xd/ux.f);
+//   ux.f = 0.5*(ux.f + xd/ux.f);
+//   where(x<0, ux.f) = LLVM_NAN_64F;
+//   return static_simd_cast<floatv<Abi>>(ux.f);
+// }
 
-  auto c1=0.4173075996388649989089, c2=0.59016206709064458299663;
-  ux.f = c1 + c2 * ux.f;
-  where(static_simd_cast<doublev<Abi>>(sign & 1) != 0, ux.f) = ux.f * SQRT2;
-  ux.f = ldexp<Abi>(ux.f, static_simd_cast<samesize<int, doublev<Abi>>>(sign >> 1) );
+// template <class Abi>
+// doublev<Abi> sqrt(doublev<Abi> x) {
+//   Abi_64suf<Abi> ux;
+//   ux.f = x;
+//   ulongv<Abi> sign = (ux.u >> 52) & SqrtAbsMask;
+//   sign -= SqrtSignMask;
+//   ux.i = ux.i & s2v<long, longv<Abi>>(ExpMask);
+//   ux.i = ux.i | s2v<long, longv<Abi>>(HalfOne_N);
 
-  ux.f = 0.5*(ux.f + x/ux.f);
-  ux.f = 0.5*(ux.f + x/ux.f);
-  ux.f = 0.5*(ux.f + x/ux.f);
+//   auto c1=0.4173075996388649989089, c2=0.59016206709064458299663;
+//   ux.f = c1 + c2 * ux.f;
+//   where(static_simd_cast<doublev<Abi>>(sign & 1) != 0, ux.f) = ux.f * SQRT2;
+//   ux.f = ldexp<Abi>(ux.f, static_simd_cast<samesize<int, doublev<Abi>>>(sign >> 1) );
 
-  where(x<0, ux.f) = LLVM_NAN_64F;
-  return ux.f;
-}
+//   ux.f = 0.5*(ux.f + x/ux.f);
+//   ux.f = 0.5*(ux.f + x/ux.f);
+//   ux.f = 0.5*(ux.f + x/ux.f);
+
+//   where(x<0, ux.f) = LLVM_NAN_64F;
+//   return ux.f;
+// }
 
 template <class Abi>
 floatv<Abi> asin(floatv<Abi> x) {
